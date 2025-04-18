@@ -1,0 +1,74 @@
+Ollama API Overview:
+Ollama is a tool for running large language models (LLMs) locally. Its API allows
+programmatic interaction with these models through REST endpoints.
+Server Details:
+- Default URL: http://localhost:11434
+- API paths start with "/api/"
+Common API Endpoints:
+1. Generate Text - POST /api/generate
+   - Used for one-off text generation
+   - Request Format:
+     {
+       "model": "llama2",           // Required: name of the model to use
+       "prompt": "Your prompt here", // Required: the input prompt
+       "system": "You are...",       // Optional: system prompt
+       "stream": true,               // Optional: stream responses (default true)
+       "raw": false,                 // Optional: return raw response without formatting
+       "context": [],                // Optional: context for continued generation
+       "options": {                  // Optional: model parameters
+         "temperature": 0.8,
+         "top_p": 0.9
+       }
+     }
+   - Response Format (with stream: false):
+     {
+       "model": "llama2",
+       "response": "Generated text response here",
+       "context": [345, 456, ...],   // Context tokens for continued generation
+       "done": true
+     }
+   - Streaming Response Format (multiple JSON objects):
+     {"model": "llama2", "response": "first", "done": false}
+     {"model": "llama2", "response": " part", "done": false}
+     {"model": "llama2", "response": " of response", "done": true}
+2. Chat Endpoint - POST /api/chat
+   - For multi-turn conversations
+   - Request Format:
+     {
+       "model": "llama2",
+       "messages": [                 // Array of message objects
+         {"role": "user", "content": "Hello!"},
+         {"role": "assistant", "content": "Hi there!"},
+         {"role": "user", "content": "How are you?"}
+       ],
+       "stream": true,
+       "options": {
+         "temperature": 0.7
+       }
+     }
+   - Response Format: Similar to /generate
+3. List Models - GET /api/tags
+   - Lists all available models
+   - Response Format:
+     {
+       "models": [
+         {"name": "llama2", "size": 3791730267, "...": "..."},
+         {"name": "gemma:2b", "...": "..."}
+       ]
+     }
+4. Model Management:
+   - Pull models: POST /api/pull
+   - Create models: POST /api/create
+   - Delete models: DELETE /api/delete
+API Headers:
+- Content-Type: application/json
+- Accept: application/json
+- No authentication headers by default (local service)
+Example Usage in Go:
+resp, err := http.Post(
+	"http://localhost:11434/api/generate",
+	"application/json",
+	strings.NewReader(`{"model":"llama2","prompt":"Write a haiku about programming"}`)
+)
+References:
+- API Documentation: https://github.com/ollama/ollama/blob/main/docs/api.md
