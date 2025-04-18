@@ -1,6 +1,7 @@
 package gollama
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -20,6 +21,22 @@ func getRequest(location string) ([]byte, error) {
 	return body, nil
 }
 
+func find(slice []string, val string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
+}
+
+type Prompt struct {
+	Model  string `json:"model"`
+	Prompt string `json:"prompt"`
+	Stream bool   `json:"stream"`
+	System string `json:"system"`
+}
+
 type PromptResponse struct {
 	Model    string `json:"model"`
 	Response string `json:"response"`
@@ -30,7 +47,6 @@ type ModelInfo struct {
 	Name       string `json:"name"`
 	ModifiedAt string `json:"modified_at"`
 	Size       int64  `json:"size"`
-	Details    string `json:"details"`
 }
 
 type ModelList struct {
@@ -38,10 +54,9 @@ type ModelList struct {
 }
 
 type Model struct {
-	Name     string
-	Addr     string
-	Prompts  []string
-	Response PromptResponse
+	Name   string
+	Addr   string
+	System string
 }
 
 func (model *Model) ListModels() ([]string, error) {
@@ -51,6 +66,7 @@ func (model *Model) ListModels() ([]string, error) {
 	if err != nil {
 		return avaiableModels, err
 	}
+	//println(string(resp))
 	if err := json.Unmarshal(resp, &modelsResponse); err != nil {
 		return avaiableModels, err
 	}
@@ -60,17 +76,45 @@ func (model *Model) ListModels() ([]string, error) {
 	return avaiableModels, nil
 }
 
-func (model *Model) Generate(prompt string) (string, error) {
+func (model *Model) Generate(msg string) (string, error) {
 	var modelResponse string
+	var promptResponse PromptResponse
+	prompt := Prompt{model.Name, msg, false, model.System}
+	promptStr, err := json.Marshal(prompt)
+	if err != nil {
+		return modelResponse, err
+	}
+	resp, err := http.Post(model.Addr+"/api/generate", "application/json", bytes.NewBuffer(promptStr))
+	if err != nil {
+		return modelResponse, err
+	}
+	defer resp.Body.Close()
 
+	if err := json.NewDecoder(resp.Body).Decode(&promptResponse); err != nil {
+		return modelResponse, err
+	}
+
+	modelResponse = promptResponse.Response
 	return modelResponse, nil
 }
 
-func CreateModel(name string, addr string) (*Model, error) {
-	if addr == "" {
-		addr = "localhost:11434"
+func (model *Model) changeModel(modelName string) error {
+	models, err := model.ListModels()
+	if err != nil {
+		return err
 	}
-	newModel := &Model{Name: name, Addr: addr}
+	if !find(models, modelName) {
+		return errors.New("model not found")
+	}
+	model.Name = modelName
+	return nil
+}
+
+func CreateModel(name string, addr string, system string) (*Model, error) {
+	if addr == "" {
+		addr = "http://localhost:11434"
+	}
+	newModel := &Model{name, addr, system}
 	models, err := newModel.ListModels()
 	if err != nil {
 		return nil, err
@@ -78,13 +122,7 @@ func CreateModel(name string, addr string) (*Model, error) {
 	if len(models) == 0 {
 		return nil, errors.New("no models found")
 	}
-	check := false
-	for _, model := range models {
-		if model == name {
-			check = true
-		}
-	}
-	if !check {
+	if !find(models, name) {
 		return nil, errors.New("model not found")
 	}
 	return newModel, nil
