@@ -6,7 +6,11 @@ import (
 )
 
 func Test(t *testing.T) {
-	model, err := CreateModel("qwen2.5-coder:14b", "", "Speak like a pirate")
+	modelName := "qwen2.5-coder:14b"
+	systemPrompt := "Speak like a pirate"
+	prompt := "Tell me a joke"
+
+	model, err := CreateModel(modelName, "", systemPrompt)
 	if err != nil {
 		t.Error(err)
 	}
@@ -17,7 +21,37 @@ func Test(t *testing.T) {
 	}
 	fmt.Println(models)
 
-	resp, err := model.Generate("Who are you?")
+	resp, err := model.Generate(prompt)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(resp)
+}
+
+func Test_chat(t *testing.T) {
+	modelName := "qwen2.5-coder:14b"
+	systemPrompt := "Speak like a pirate"
+	prompt1 := "Who are you?"
+	prompt2 := "Nice to meet you, I am Tester"
+	chat, err := CreateChat(modelName, "", systemPrompt)
+	if err != nil {
+		t.Error(err)
+	}
+
+	fmt.Println("USR:", prompt1)
+	err = chat.Send(prompt1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	resp, err := chat.Receive()
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(resp)
+
+	fmt.Println("USR:", prompt2)
+	resp, err = chat.sendAndReceive(prompt2)
 	if err != nil {
 		t.Error(err)
 	}

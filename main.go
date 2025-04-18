@@ -37,10 +37,28 @@ type Prompt struct {
 	System string `json:"system"`
 }
 
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type ChatPrompt struct {
+	Model    string    `json:"model"`
+	Messages []Message `json:"messages"`
+	Stream   bool      `json:"stream"`
+	System   string    `json:"system"`
+}
+
 type PromptResponse struct {
 	Model    string `json:"model"`
 	Response string `json:"response"`
 	Done     bool   `json:"done"`
+}
+
+type ChatResponse struct {
+	Model    string  `json:"model"`
+	Response Message `json:"message"`
+	Done     bool    `json:"done"`
 }
 
 type ModelInfo struct {
@@ -126,4 +144,54 @@ func CreateModel(name string, addr string, system string) (*Model, error) {
 		return nil, errors.New("model not found")
 	}
 	return newModel, nil
+}
+
+type Chat struct {
+	Model    Model
+	Messages []Message
+}
+
+func (chat *Chat) Send(msg string) error {
+	chat.Messages = append(chat.Messages, Message{"user", msg})
+	return nil
+}
+
+func (chat *Chat) Receive() (string, error) {
+	var modelResponse string
+	var promptResponse ChatResponse
+	prompt := ChatPrompt{chat.Model.Name, chat.Messages, false, chat.Model.System}
+	promptStr, err := json.Marshal(prompt)
+	if err != nil {
+		return modelResponse, err
+	}
+	resp, err := http.Post(chat.Model.Addr+"/api/chat", "application/json", bytes.NewBuffer(promptStr))
+	if err != nil {
+		return modelResponse, err
+	}
+	defer resp.Body.Close()
+
+	if err := json.NewDecoder(resp.Body).Decode(&promptResponse); err != nil {
+		return modelResponse, err
+	}
+
+	modelResponse = promptResponse.Response.Content
+	//log.Println(modelResponse)
+	chat.Messages = append(chat.Messages, Message{"assistant", modelResponse})
+	return modelResponse, nil
+}
+
+func (chat *Chat) sendAndReceive(msg string) (string, error) {
+	err := chat.Send(msg)
+	if err != nil {
+		return "", err
+	}
+	return chat.Receive()
+}
+
+func CreateChat(modelName string, addr string, system string) (*Chat, error) {
+	model, err := CreateModel(modelName, addr, system)
+	if err != nil {
+		return nil, err
+	}
+	return &Chat{*model, []Message{}}, nil
 }
