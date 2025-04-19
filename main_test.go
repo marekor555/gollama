@@ -52,7 +52,7 @@ func Test_chat(t *testing.T) {
 	fmt.Println(resp)
 
 	fmt.Println("USR:", prompt2)
-	resp, err = chat.sendAndReceive(prompt2)
+	resp, err = chat.SendAndReceive(prompt2)
 	if err != nil {
 		t.Error(err)
 	}

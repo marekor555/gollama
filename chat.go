@@ -47,7 +47,7 @@ func (chat *Chat) Receive() (string, error) {
 	return modelResponse, nil
 }
 
-func (chat *Chat) sendAndReceive(msg string) (string, error) {
+func (chat *Chat) SendAndReceive(msg string) (string, error) {
 	err := chat.Send(msg)
 	if err != nil {
 		return "", err
