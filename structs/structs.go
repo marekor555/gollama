@@ -1,15 +1,17 @@
 package structs
 
 type Prompt struct {
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
-	Stream bool   `json:"stream"`
-	System string `json:"system"`
+	Model  string   `json:"model"`
+	Prompt string   `json:"prompt"`
+	Images []string `json:"images"`
+	Stream bool     `json:"stream"`
+	System string   `json:"system"`
 }
 
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string   `json:"role"`
+	Content string   `json:"content"`
+	Images  []string `json:"images,omitempty"`
 }
 
 type ChatPrompt struct {

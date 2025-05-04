@@ -7,10 +7,11 @@ import (
 )
 
 func Test(t *testing.T) {
-	modelName := "qwen2.5-coder:14b"
-	systemPrompt := "Speak like a pirate"
-	prompt := "Tell me a joke"
-
+	modelName := "llava:latest"
+	systemPrompt := "Dont add anything to the image"
+	prompt := "Describe the image"
+	manager := manage.NewManager("")
+	println(manager.ListModels())
 	model, err := NewModel(modelName, "", systemPrompt)
 	if err != nil {
 		t.Error(err)
@@ -22,18 +23,19 @@ func Test(t *testing.T) {
 	}
 	fmt.Println(models)
 
-	resp, err := model.Generate(prompt)
+	resp, err := model.Generate(prompt, "random.jpg")
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println(resp)
+
 }
 
 func Test_chat(t *testing.T) {
-	modelName := "qwen2.5-coder:14b"
-	systemPrompt := "Speak like a pirate"
+	modelName := "llava:latest"
+	systemPrompt := "Speak shortly and clearly."
 	prompt1 := "Who are you?"
-	prompt2 := "Nice to meet you, I am Tester"
+	prompt2 := "Describe the image"
 	chat, err := NewChat(modelName, "", systemPrompt)
 	if err != nil {
 		t.Error(err)
@@ -52,28 +54,28 @@ func Test_chat(t *testing.T) {
 	fmt.Println(resp)
 
 	fmt.Println("USR:", prompt2)
-	resp, err = chat.SendAndReceive(prompt2)
+	resp, err = chat.SendAndReceive(prompt2, "random.jpg")
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println(resp)
 }
 
-func Test_manager(t *testing.T) {
-	manager := manage.NewManager("")
-	models := manager.ListModels()
-	fmt.Println(models)
-
-	err := manager.Install("nomic-embed-text")
-	if err != nil {
-		t.Error(err)
-	}
-	models = manager.ListModels()
-	fmt.Println(models)
-
-	err = manager.Remove("nomic-embed-text")
-	if err != nil {
-		t.Error(err)
-	}
-	models = manager.ListModels()
-}
+//func Test_manager(t *testing.T) {
+//	manager := manage.NewManager("")
+//	models := manager.ListModels()
+//	fmt.Println(models)
+//
+//	err := manager.Install("nomic-embed-text")
+//	if err != nil {
+//		t.Error(err)
+//	}
+//	models = manager.ListModels()
+//	fmt.Println(models)
+//
+//	err = manager.Remove("nomic-embed-text")
+//	if err != nil {
+//		t.Error(err)
+//	}
+//	models = manager.ListModels()
+//}

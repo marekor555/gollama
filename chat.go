@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/marekor555/gollama/structs"
+	"github.com/marekor555/gollama/utils"
 	"io"
 	"net/http"
 )
@@ -13,8 +14,18 @@ type Chat struct {
 	Messages []structs.Message
 }
 
-func (chat *Chat) Send(msg string) error {
-	chat.Messages = append(chat.Messages, structs.Message{Role: "user", Content: msg})
+func (chat *Chat) Send(msg string, images ...string) error {
+	message := structs.Message{Role: "user", Content: msg}
+	if images != nil {
+		for _, imagePath := range images {
+			encoded, err := utils.LoadAndEncode(imagePath)
+			if err != nil {
+				return err
+			}
+			message.Images = append(message.Images, encoded)
+		}
+	}
+	chat.Messages = append(chat.Messages, message)
 	return nil
 }
 
@@ -47,8 +58,8 @@ func (chat *Chat) Receive() (string, error) {
 	return modelResponse, nil
 }
 
-func (chat *Chat) SendAndReceive(msg string) (string, error) {
-	err := chat.Send(msg)
+func (chat *Chat) SendAndReceive(msg string, images ...string) (string, error) {
+	err := chat.Send(msg, images...)
 	if err != nil {
 		return "", err
 	}

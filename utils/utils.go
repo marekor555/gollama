@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"encoding/base64"
 	"io"
 	"net/http"
+	"os"
 )
 
 func GetRequest(location string) ([]byte, error) {
@@ -30,4 +32,13 @@ func Find(slice []string, val string) bool {
 		}
 	}
 	return false
+}
+
+func LoadAndEncode(path string) (string, error) {
+	imageData, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	encodedImage := base64.StdEncoding.EncodeToString(imageData)
+	return encodedImage, nil
 }

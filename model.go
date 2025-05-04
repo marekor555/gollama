@@ -33,10 +33,19 @@ func (model *Model) ListModels() ([]string, error) {
 	return availableModels, nil
 }
 
-func (model *Model) Generate(msg string) (string, error) {
+func (model *Model) Generate(msg string, images ...string) (string, error) {
 	var modelResponse string
 	var promptResponse structs.PromptResponse
 	prompt := structs.Prompt{Model: model.Name, Prompt: msg, System: model.System}
+	if images != nil {
+		for _, imagePath := range images {
+			encoded, err := utils.LoadAndEncode(imagePath)
+			if err != nil {
+				return "", err
+			}
+			prompt.Images = append(prompt.Images, encoded)
+		}
+	}
 	promptStr, err := json.Marshal(prompt)
 	if err != nil {
 		return modelResponse, err
